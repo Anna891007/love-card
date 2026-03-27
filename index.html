@@ -6,35 +6,138 @@
     <title>考研大戰：阿傑x緣緣肉償集點卡</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        // 1. 密碼驗證
+        const PASSWORD = '1234'; 
+        function checkPassword() {
+            const userPass = prompt("這是一份私密文件，請輸入存取密碼：");
+            if (userPass === PASSWORD) {
+                document.body.style.display = 'block';
+            } else {
+                alert("密碼錯誤！");
+                window.location.href = "https://www.google.com";
+            }
+        }
+        document.write('<style>body { display: none; }</style>');
+        window.onload = function() {
+            checkPassword();
+            showRule(0);
+            renderUI();
+        };
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background: #020617; 
-            color: #f8fafc; 
-            -webkit-tap-highlight-color: transparent;
-            touch-action: pan-y;
-            display: none; /* 預設隱藏，驗證後顯示 */
-        }
-
+        body { font-family: 'Noto Sans TC', sans-serif; background: #020617; color: #f8fafc; -webkit-tap-highlight-color: transparent; touch-action: pan-y; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .stamped { background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; transform: scale(1.05); }
-        
-        .modal { 
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.95); 
-            z-index: 100; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 15px;
-            touch-action: none;
-        }
-
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; align-items: center; justify-content: center; padding: 15px; }
         .canvas-container { width: 100%; touch-action: none; }
         canvas { background: #000; border: 2px solid #334155; border-radius: 1rem; width: 100%; height: 180px; }
+        .rule-tab.active { color: #ec4899; border-bottom: 2px solid #ec4899; }
+        * { user-select: none; -webkit-user-select: none; }
+    </style>
+</head>
+<body class="p-4 pb-12">
+    <div class="w-full max-w-md mx-auto space-y-6">
+        <div class="glass rounded-[2.5rem] p-8 text-center border border-white/10 bg-gradient-to-br from-pink-900/20 to-indigo-900/20">
+            <h1 class="text-2xl font-black italic tracking-tighter text-pink-500">阿傑 x 緣緣</h1>
+            <p class="text-[10px] tracking-widest opacity-60 mt-1 uppercase">2/11 考研應援肉償集點卡</p>
+            <div class="mt-6 flex justify-center items-baseline space-x-2">
+                <span id="totalDisplay" class="text-7xl font-black text-white">0</span>
+                <span class="text-lg text-pink-400 font-bold">PTS</span>
+            </div>
+        </div>
+        <div id="stampGrid" class="grid grid-cols-5 gap-3 p-2"></div>
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="openRecord('add')" class="bg-pink-600 h-20 rounded-3xl font-black text-sm shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center"><i class="fas fa-plus-circle mb-1 text-xl"></i>緣緣加點</button>
+            <button onclick="openRecord('minus')" class="bg-emerald-600 h-20 rounded-3xl font-black text-sm shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center"><i class="fas fa-minus-circle mb-1 text-xl"></i>阿傑贖罪</button>
+        </div>
+        <div class="glass rounded-3xl p-5 border border-white/5">
+            <div class="flex justify-between mb-4 border-b border-white/10 pb-2 text-[11px] font-bold">
+                <button onclick="showRule(0)" class="rule-tab active" id="t0">點數規則</button>
+                <button onclick="showRule(1)" class="rule-tab" id="t1">阿傑贖罪</button>
+                <button onclick="showRule(2)" class="rule-tab" id="t2">獎勵清單</button>
+            </div>
+            <div id="ruleText" class="text-[12px] text-slate-400 leading-relaxed min-h-[100px]"></div>
+        </div>
+        <button onclick="toggleHistory()" class="w-full py-4 text-[11px] text-slate-600 font-bold uppercase tracking-[0.2em]">查看歷史紀錄</button>
+    </div>
+
+    <div id="recordModal" class="modal">
+        <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm border border-white/20">
+            <h2 id="modalTitle" class="text-lg font-black mb-4 text-white">RECORD</h2>
+            <select id="recordType" class="w-full bg-slate-800 rounded-xl p-3 text-sm mb-4 text-white outline-none border border-white/10"></select>
+            <textarea id="recordNote" placeholder="備註" class="w-full bg-slate-800 rounded-xl p-3 text-sm h-20 mb-4 text-white outline-none border border-white/10"></textarea>
+            <div class="canvas-container mb-4"><canvas id="recordPad"></canvas></div>
+            <div class="flex space-x-3"><button onclick="closeModals()" class="flex-1 text-slate-400 text-xs font-bold">取消</button><button id="btnRecordConfirm" class="flex-[2] py-4 rounded-xl font-black text-xs text-white">存入</button></div>
+        </div>
+    </div>
+
+    <div id="historyView" class="modal">
+        <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm max-h-[80vh] flex flex-col border border-white/20">
+            <h2 class="text-lg font-black mb-4 text-white italic">HISTORY</h2>
+            <div id="historyList" class="flex-1 overflow-y-auto space-y-3 pr-1"></div>
+            <button onclick="closeModals()" class="mt-4 w-full py-3 bg-slate-800 rounded-xl text-xs font-bold text-white">關閉</button>
+        </div>
+    </div>
+
+    <script>
+        const DB_KEY = 'love_card_final_backup';
+        let state = JSON.parse(localStorage.getItem(DB_KEY)) || { records: [] };
+        function saveState() { localStorage.setItem(DB_KEY, JSON.stringify(state)); renderUI(); }
+        const rules = [ `<strong>【加點規則】</strong><br>• 阿傑乖乖債：拒絕色色 +1<br>• 緣緣陪讀債：安靜陪讀 2H +1<br>• 分心懲罰債：偷滑手機 +3`, `<strong>【阿傑贖罪】</strong><br>• 學霸贖罪：進度超前 -1<br>• 家事抵債：承包全天家事 -1`, `<strong>【獎勵清算】</strong><br>• 5點：【指定戰袍券】<br>• 10點：【全自動模式】` ];
+        function renderUI() {
+            const total = state.records.reduce((s, r) => s + (r.type.includes('-') ? -r.pts : r.pts), 0);
+            const totalClean = Math.max(0, total);
+            document.getElementById('totalDisplay').innerText = totalClean;
+            const grid = document.getElementById('stampGrid');
+            grid.innerHTML = '';
+            const slots = Math.max(10, Math.ceil(totalClean / 5) * 5);
+            for(let i=1; i<=slots; i++){
+                const div = document.createElement('div');
+                const filled = i <= totalClean;
+                div.className = `aspect-square rounded-2xl flex items-center justify-center text-[11px] font-bold border ${filled ? 'stamped border-transparent' : 'bg-slate-900/40 border-white/5 text-slate-800'}`;
+                div.innerHTML = filled ? '<i class="fas fa-heart"></i>' : i;
+                grid.appendChild(div);
+            }
+        }
+        function showRule(i) {
+            document.querySelectorAll('.rule-tab').forEach((t, idx) => t.classList.toggle('active', i === idx));
+            document.getElementById('ruleText').innerHTML = rules[i];
+        }
+        function openRecord(mode) {
+            document.getElementById('recordModal').style.display = 'flex';
+            const select = document.getElementById('recordType');
+            select.innerHTML = '';
+            if(mode === 'add') {
+                document.getElementById('modalTitle').innerText = "加點 RECORD";
+                ["阿傑乖乖債(+1)", "緣緣陪讀債(+1)", "分心懲罰債(+3)"].forEach(o => select.add(new Option(o, o)));
+            } else {
+                document.getElementById('modalTitle').innerText = "贖罪 RECORD";
+                ["學霸贖罪券(-1)", "家事抵債券(-1)"].forEach(o => select.add(new Option(o, o)));
+            }
+            document.getElementById('btnRecordConfirm').onclick = () => {
+                const type = select.value;
+                const pts = parseInt(type.match(/(\d+)/)[0]);
+                state.records.push({ time: new Date().toLocaleString(), type, note: document.getElementById('recordNote').value, pts });
+                saveState(); closeModals();
+            };
+        }
+        function toggleHistory() {
+            document.getElementById('historyView').style.display = 'flex';
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            [...state.records].reverse().forEach((r, idx) => {
+                const div = document.createElement('div');
+                div.className = "p-4 rounded-2xl border border-white/10 bg-white/5";
+                div.innerHTML = `<p class="text-[10px] font-black">${r.type}</p><p class="text-[9px] text-white/40">${r.time}</p>`;
+                list.appendChild(div);
+            });
+        }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+    </script>
+</body>
+</html>        canvas { background: #000; border: 2px solid #334155; border-radius: 1rem; width: 100%; height: 180px; }
         .rule-tab.active { color: #ec4899; border-bottom: 2px solid #ec4899; }
         * { user-select: none; -webkit-user-select: none; }
     </style>
