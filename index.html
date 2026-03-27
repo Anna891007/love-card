@@ -8,33 +8,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        <script>
-    // 設定你的密碼（可以改成你喜歡的，例如 '0211'）
-    const PASSWORD = '1234'; 
-
-    function checkPassword() {
-        const userPass = prompt("這是一份私密文件，請輸入存取密碼：");
-        if (userPass === PASSWORD) {
-            alert("驗證成功！歡迎進入。");
-            document.body.style.display = 'block'; // 顯示網頁內容
-        } else {
-            alert("密碼錯誤，將跳轉回 Google。");
-            window.location.href = "https://www.google.com";
-        }
-    }
-
-    // 先把網頁藏起來，驗證過後再顯示
-    document.write('<style>body { display: none; }</style>');
-    
-    // 網頁載入後立刻執行驗證
-    window.onload = checkPassword;
-</script>
+        
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background: #020617; 
             color: #f8fafc; 
             -webkit-tap-highlight-color: transparent;
-            touch-action: pan-y; /* 關鍵：強制允許上下滑動 */
+            touch-action: pan-y;
+            display: none; /* 預設隱藏，驗證後顯示 */
         }
 
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
@@ -49,50 +30,49 @@
             align-items: center; 
             justify-content: center; 
             padding: 15px;
-            touch-action: none; /* 彈窗開啟時禁用背景滑動 */
+            touch-action: none;
         }
 
-        /* 畫布專用 */
-        .canvas-container {
-            width: 100%;
-            touch-action: none; /* 只有在畫布區才禁止滑動，以便繪圖 */
-        }
-        
-        canvas { 
-            background: #000; 
-            border: 2px solid #334155; 
-            border-radius: 1rem; 
-            width: 100%; 
-            height: 180px;
-        }
-
+        .canvas-container { width: 100%; touch-action: none; }
+        canvas { background: #000; border: 2px solid #334155; border-radius: 1rem; width: 100%; height: 180px; }
         .rule-tab.active { color: #ec4899; border-bottom: 2px solid #ec4899; }
-        
-        /* 防止選中文字干擾滑動 */
         * { user-select: none; -webkit-user-select: none; }
     </style>
+
+    <script>
+        // 設定存取密碼
+        const PASSWORD = '1234'; 
+
+        function checkPassword() {
+            const userPass = prompt("這是一份私密文件，請輸入存取密碼：");
+            if (userPass === PASSWORD) {
+                document.body.style.display = 'block'; // 驗證成功才顯示內容
+            } else {
+                alert("密碼錯誤，拒絕存取。");
+                window.location.href = "https://www.google.com";
+            }
+        }
+        // 頁面載入時執行
+        window.onload = function() {
+            checkPassword();
+            // 執行原本 App 的初始化
+            if (typeof initApp === "function") initApp();
+        };
+    </script>
 </head>
 <body class="p-4 pb-12">
-
     <div class="w-full max-w-md mx-auto space-y-6">
-        <!-- Header -->
         <div class="glass rounded-[2.5rem] p-8 text-center border border-white/10 bg-gradient-to-br from-pink-900/20 to-indigo-900/20">
             <h1 class="text-2xl font-black italic tracking-tighter text-pink-500">阿傑 x 緣緣</h1>
             <p class="text-[10px] tracking-widest opacity-60 mt-1 uppercase">2/11 考研應援肉償集點卡</p>
-            
-            <!-- Counter -->
             <div class="mt-6 flex justify-center items-baseline space-x-2">
                 <span id="totalDisplay" class="text-7xl font-black text-white">0</span>
                 <span class="text-lg text-pink-400 font-bold">PTS</span>
             </div>
         </div>
 
-        <!-- Stamp Grid -->
-        <div id="stampGrid" class="grid grid-cols-5 gap-3 p-2">
-            <!-- 格子會由 JS 動態生成 -->
-        </div>
+        <div id="stampGrid" class="grid grid-cols-5 gap-3 p-2"></div>
 
-        <!-- Actions -->
         <div class="grid grid-cols-2 gap-4">
             <button onclick="openRecord('add')" class="bg-pink-600 h-20 rounded-3xl font-black text-sm shadow-lg active:scale-95 transition-transform flex flex-col items-center justify-center">
                 <i class="fas fa-plus-circle mb-1 text-xl"></i>緣緣加點
@@ -102,7 +82,6 @@
             </button>
         </div>
 
-        <!-- Rules (使用簡單的手風琴樣式) -->
         <div class="glass rounded-3xl p-5 border border-white/5">
             <div class="flex justify-between mb-4 border-b border-white/10 pb-2 text-[11px] font-bold">
                 <button onclick="showRule(0)" class="rule-tab active" id="t0">點數規則</button>
@@ -112,7 +91,6 @@
             <div id="ruleText" class="text-[12px] text-slate-400 leading-relaxed min-h-[100px]"></div>
         </div>
 
-        <!-- Signatures -->
         <div class="grid grid-cols-2 gap-4">
             <div onclick="openSigModal('A')" class="glass rounded-2xl p-3 text-center active:bg-white/5">
                 <p class="text-[9px] text-slate-500 mb-2 uppercase">甲方 (阿傑)</p>
@@ -133,87 +111,20 @@
         <button onclick="toggleHistory()" class="w-full py-4 text-[11px] text-slate-600 font-bold uppercase tracking-[0.2em] active:text-white">查看歷史紀錄</button>
     </div>
 
-    <!-- Modals -->
-    <div id="recordModal" class="modal">
-        <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm border border-white/20">
-            <h2 id="modalTitle" class="text-lg font-black mb-4 text-white">新增紀錄</h2>
-            <select id="recordType" class="w-full bg-slate-800 rounded-xl p-3 text-sm mb-4 text-white outline-none border border-white/10"></select>
-            <textarea id="recordNote" placeholder="備註（可不填）" class="w-full bg-slate-800 rounded-xl p-3 text-sm h-20 mb-4 text-white outline-none border border-white/10"></textarea>
-            
-            <div class="canvas-container mb-4">
-                <p class="text-[10px] text-slate-500 mb-2">手寫確認：</p>
-                <canvas id="recordPad"></canvas>
-            </div>
-            
-            <div class="flex space-x-3">
-                <button onclick="closeModals()" class="flex-1 text-slate-400 text-xs font-bold">取消</button>
-                <button id="btnRecordConfirm" class="flex-[2] py-4 rounded-xl font-black text-xs text-white">存入手機</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="sigModal" class="modal">
-        <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm border border-white/20">
-            <h2 id="sigTitle" class="text-lg font-black text-white mb-4 italic uppercase">官方簽署</h2>
-            <div class="canvas-container mb-6">
-                <canvas id="sigPad"></canvas>
-            </div>
-            <div class="flex space-x-3">
-                <button onclick="closeModals()" class="flex-1 text-slate-400 text-xs font-bold">取消</button>
-                <button id="btnSigSave" class="flex-[2] bg-white text-black py-4 rounded-xl font-black text-xs uppercase">簽署完成</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="historyView" class="modal">
-        <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm max-h-[80vh] flex flex-col border border-white/20">
-            <h2 class="text-lg font-black mb-4 text-white italic">HISTORY</h2>
-            <div id="historyList" class="flex-1 overflow-y-auto space-y-3 pr-1 touch-auto"></div>
-            <button onclick="closeModals()" class="mt-4 w-full py-3 bg-slate-800 rounded-xl text-xs font-bold text-white">關閉</button>
-        </div>
-    </div>
+    <div id="recordModal" class="modal">...</div>
+    <div id="sigModal" class="modal">...</div>
+    <div id="historyView" class="modal">...</div>
 
     <script>
-        // --- 資料儲存 ---
-        const DB_KEY = 'love_card_final';
-        let state = JSON.parse(localStorage.getItem(DB_KEY)) || { records: [], sigA: null, sigB: null };
-
-        function saveState() {
-            localStorage.setItem(DB_KEY, JSON.stringify(state));
+        // 這裡放你原本所有的 JS 邏輯 (DB_KEY, renderUI, openRecord 等等)
+        // ... (請保留你原本代碼中的 script 內容)
+        function initApp() {
+            showRule(0);
             renderUI();
         }
-
-        const rules = [
-            `<strong>【加點規則】</strong><br>• 阿傑乖乖債：拒絕色色 +1<br>• 緣緣陪讀債：安靜陪讀 2H +1<br>• 分心懲罰債：偷滑手機不色色 直接 +3<br>• 考前充電樁：純抱抱/按摩 15min +1`,
-            `<strong>【阿傑贖罪】</strong><br>• 學霸贖罪：進度超前且驗收通過 -1<br>• 家事抵債：承包全天家事 -1<br>• 清晨喚醒：連3天準時起讀+買早餐 -1`,
-            `<strong>【獎勵清算】</strong><br>• 5點：【指定戰袍券】<br>• 10點：【全自動模式】<br>• 20點：【24H 身體使用權】`
-        ];
-
-        function renderUI() {
-            const total = state.records.reduce((s, r) => s + (r.type.includes('-') ? -r.pts : r.pts), 0);
-            const totalClean = Math.max(0, total);
-            document.getElementById('totalDisplay').innerText = totalClean;
-
-            const grid = document.getElementById('stampGrid');
-            grid.innerHTML = '';
-            // 最少顯示 10 個
-            const slots = Math.max(10, Math.ceil(totalClean / 5) * 5);
-            for(let i=1; i<=slots; i++){
-                const div = document.createElement('div');
-                const filled = i <= totalClean;
-                div.className = `aspect-square rounded-2xl flex items-center justify-center text-[11px] font-bold border transition-all ${filled ? 'stamped border-transparent' : 'bg-slate-900/40 border-white/5 text-slate-800'}`;
-                div.innerHTML = filled ? '<i class="fas fa-heart"></i>' : i;
-                grid.appendChild(div);
-            }
-
-            const displaySig = (role, data) => {
-                const img = document.getElementById('imgSig' + role);
-                const p = document.getElementById('pSig' + role);
-                if(data && data.length > 500) {
-                    img.src = data; img.classList.remove('hidden'); p.classList.add('hidden');
-                } else {
-                    img.classList.add('hidden'); p.classList.remove('hidden');
-                }
+    </script>
+</body>
+</html>                }
             };
             displaySig('A', state.sigA);
             displaySig('B', state.sigB);
