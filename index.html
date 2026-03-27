@@ -8,7 +8,27 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        
+        <script>
+    // 設定你的密碼（可以改成你喜歡的，例如 '0211'）
+    const PASSWORD = '1234'; 
+
+    function checkPassword() {
+        const userPass = prompt("這是一份私密文件，請輸入存取密碼：");
+        if (userPass === PASSWORD) {
+            alert("驗證成功！歡迎進入。");
+            document.body.style.display = 'block'; // 顯示網頁內容
+        } else {
+            alert("密碼錯誤，將跳轉回 Google。");
+            window.location.href = "https://www.google.com";
+        }
+    }
+
+    // 先把網頁藏起來，驗證過後再顯示
+    document.write('<style>body { display: none; }</style>');
+    
+    // 網頁載入後立刻執行驗證
+    window.onload = checkPassword;
+</script>
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background: #020617; 
